@@ -22,7 +22,7 @@ func NewTransactionRepo(filepath string) *TransactiontRepo {
 	}
 }
 
-func (r *TransactiontRepo) GetTransaction(ctx context.Context, startTime, endTime time.Time) ([]*model.Transaction, error) {
+func (r *TransactiontRepo) GetTransaction(ctx context.Context) ([]*model.Transaction, error) {
 	file, err := os.Open(r.FilePath)
 	if err != nil {
 		log.Fatal(err)
@@ -45,11 +45,10 @@ func (r *TransactiontRepo) GetTransaction(ctx context.Context, startTime, endTim
 			continue
 		}
 
-		amountStr := row[1]
-		trxTimeStr := row[3]
+		trxTime, _ := time.ParseInLocation("2006-01-02T15:04:05Z", row[3], time.Local)
 
+		amountStr := row[1]
 		amount, _ := strconv.ParseFloat(amountStr, 64)
-		trxTime, _ := time.ParseInLocation("2006-01-02T15:04:05Z", trxTimeStr, time.Local)
 
 		dt = append(dt, &model.Transaction{
 			TrxID:           row[0],

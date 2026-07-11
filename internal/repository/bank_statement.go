@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/melisa92/reconciliation/internal/model"
 )
@@ -21,7 +20,7 @@ func NewBankStatementRepo(filepath []string) *BankStatementRepo {
 	}
 }
 
-func (r *BankStatementRepo) GetBankStatement(ctx context.Context, startDate time.Time, endDate time.Time) ([]*model.BankStatement, error) {
+func (r *BankStatementRepo) GetBankStatement(ctx context.Context) ([]*model.BankStatement, error) {
 	raw := []*model.BankStatement{}
 	for i := range r.FilePath {
 		file, err := os.Open(r.FilePath[i])

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"time"
@@ -25,13 +26,13 @@ func NewTransactionUsecase(
 	}
 }
 
-func (u *ReconciliationUsecase) ReconciliationProcess(ctx context.Context, startDate time.Time, endDate time.Time) (*model.ReconciliationSummary, error) {
-	transactionData, err := u.TransactionRepo.GetTransaction(ctx, startDate, endDate)
+func (u *ReconciliationUsecase) ReconciliationProcess(ctx context.Context, startDate, endDate string) (*model.ReconciliationSummary, error) {
+	transactionData, err := u.TransactionRepo.GetTransaction(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	bankStatementData, err := u.BankStatementRepo.GetBankStatement(ctx, startDate, endDate)
+	bankStatementData, err := u.BankStatementRepo.GetBankStatement(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -43,8 +44,25 @@ func (u *ReconciliationUsecase) ReconciliationProcess(ctx context.Context, start
 
 	mapBankStatement := make(map[string][]model.BankStatement)
 
+	startTime, err := time.Parse("2006-01-02T15:04:05Z", fmt.Sprint(startDate, "T00:00:00Z"))
+	if err != nil {
+		return nil, errors.New("start time is not valid (expected format: 2006-01-02)")
+	}
+	endTime, err := time.Parse("2006-01-02T15:04:05Z", fmt.Sprint(endDate, "T23:59:59Z"))
+	if err != nil {
+		return nil, errors.New("end time is not valid (expected format: 2006-01-02)")
+	}
+	if startTime.After(endTime) {
+		return nil, errors.New("start time cannot be grater than end time")
+	}
+
 	// make map for bankstatement data
 	for _, v := range bankStatementData {
+		statementTime, _ := time.Parse("2006-01-02", v.Date)
+		if statementTime.Before(startTime) || statementTime.After(endTime) {
+			continue
+		}
+
 		trxType := model.DefineTrxType("CREDIT")
 		if v.Amount < 0 {
 			trxType = model.DefineTrxType("DEBIT")
@@ -55,7 +73,7 @@ func (u *ReconciliationUsecase) ReconciliationProcess(ctx context.Context, start
 
 	for _, v := range transactionData {
 		// skip if transaction type is undefined
-		if v.Type == model.Undefined {
+		if v.Type == model.Undefined || v.TransactionTime.Before(startTime) || v.TransactionTime.After(endTime) {
 			continue
 		}
 

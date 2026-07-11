@@ -8,9 +8,9 @@ import (
 )
 
 type BankStatementInterface interface {
-	GetBankStatement(ctx context.Context, startDate time.Time, endDate time.Time) ([]model.Transaction, error)
+	GetBankStatement(ctx context.Context, startDate time.Time, endDate time.Time) ([]*model.BankStatement, error)
 }
 
 type TransactionStatementInterface interface {
-	GetTransaction(ctx context.Context, startDate time.Time, endDate time.Time) ([]model.Transaction, error)
+	GetTransaction(ctx context.Context, startDate time.Time, endDate time.Time) ([]*model.Transaction, error)
 }
